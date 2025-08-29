@@ -1,0 +1,89 @@
+/* Header */
+.assistant-header{transition:opacity .2s ease, transform .2s ease; will-change:opacity,transform;}
+.am-header-visible{opacity:1; pointer-events:auto;}
+.assistant-meta .assistant-complement{font-style:italic;opacity:.8;margin:0;}
+
+/* Mensajes */
+.openai-bubble{display:flex; gap:4px; margin:8px 0; margin-top: 12px;}
+
+.openai-bubble .avatar{flex:0 0 auto; background:transparent; border-radius:999px; padding:6px 10px; font-size:12px;}
+.openai-bubble .bubble{background:#fff; border-radius:12px; padding:10px 12px; box-shadow:0 1px 2px rgba(0,0,0,.06); max-width:720px;}
+.openai-bubble.user .bubble{background:#e8f2ff;}
+
+/* Quick suggestions (solo si hay) */
+.am-suggestions{margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;}
+.am-suggestion-chip{border:1px solid #e0e0e0; border-radius:999px; padding:4px 10px; background:#fafafa; cursor:pointer}
+
+/* Play + timer */
+.play-btn{margin-left:8px; border:0; background:transparent; cursor:pointer; vertical-align:middle;}
+.am-audio-toggle{
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: grid;
+  place-content: center;
+}
+
+.timer-icon{animation: am-rotate 1s linear infinite;}
+@keyframes am-rotate{from{transform:rotate(0)} to{transform:rotate(360deg)}}
+
+/* Formulario */
+.openai-chat-form textarea{resize:none; line-height:1.4; overflow-y:hidden; width:100%;}
+.openai-input-group{display:flex; gap:8px; align-items:flex-end;}
+.openai-input-inner{display:flex; align-items:flex-end; gap:8px; width:100%; position:relative;}
+.voice-btn.listening{opacity:.6;}
+
+/* Escalation banner: DESACTIVADO */
+.am-escalation-banner{display:none !important;}
+
+/* Feedback floating buttons */
+.am-feedback-fab{position:fixed; right:16px; bottom:16px; display:flex; gap:8px; z-index:9999;}
+.am-feedback-fab button{border:0; border-radius:999px; width:44px; height:44px; font-size:18px; cursor:pointer; background:#ffffff; box-shadow:0 4px 14px rgba(0,0,0,.15);}
+.am-feedback-fab button:hover{transform:translateY(-1px);}
+.am-feedback-fab{position:fixed;right:16px;bottom:16px;z-index:99999}
+
+
+.openai-chat-form textarea{
+  padding: 14px 48px 14px 16px; /* arriba/abajo iguales */
+  line-height: 1.4;             /* al escribir */
+}
+.am-stt-loading{
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.9);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  color:#555;
+  z-index:5;
+  border-radius: 30px;
+}
+.openai-chat-form textarea::placeholder{
+  line-height: 24px;            /* altura de línea del placeholder */
+}
+.openai-chat-form textarea:placeholder-shown{
+  line-height: 24px;            /* mantiene el placeholder centrado visualmente */
+}
+/* Alinear elementos fuera del bubble (sugerencias y feedback) */
+.am-suggestions{margin:8px 0 0 0; display:flex; flex-wrap:wrap; gap:6px;}
+.am-suggestion-chip{border:1px solid #e0e0e0; border-radius:999px; padding:4px 10px; background:#fafafa; cursor:pointer}
+
+.am-feedback-row{display:flex; gap:8px; margin-top:6px;}
+.openai-bubble.ai + .am-suggestions,
+.openai-bubble.ai + .am-feedback-row{ margin-left: 52px; } /* pequeña sangría bajo el avatar */
+
+/* Avatar del ítem en la lista lateral */
+.am-chat-item{ display:flex; align-items:center; justify-content:space-between; }
+.am-chat-item .am-chat-name{ display:flex; align-items:center; gap:8px; }
+.am-chat-avatar{ width:24px; height:24px; border-radius:50%; object-fit:cover; }
+
+/* List styling inside bubbles */
+.openai-bubble .bubble ul,
+.openai-bubble .bubble ol{
+  margin:0;
+  padding-left:1.25em;
+}
+.openai-bubble .bubble ul{ list-style:disc; }
+.openai-bubble .bubble ol{ list-style:decimal; }
