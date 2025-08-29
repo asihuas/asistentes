@@ -184,12 +184,13 @@ add_shortcode('am_chat', function(){
       function setState(s){ /* no visible state */ }
       function sanitizeReply(text) {
         let out = String(text || '').replace(/[&<>]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]));
-        out = out.replace(/(^|\n)(?:[-*•]\s.+)(?:\n[-*•]\s.+)*/g, (m) => {
-          const items = m.trim().split(/\n/).map(line => line.replace(/^[-*•]\s+/, ''));
+        out = out.replace(/&lt;(\/?(?:ul|ol|li|br|strong))&gt;/gi, '<$1>');
+        out = out.replace(/(^|\n)\s*(?:[-*•]\s.+)(?:\n\s*[-*•]\s.+)*/g, (m) => {
+          const items = m.trim().split(/\n/).map(line => line.replace(/^\s*[-*•]\s+/, ''));
           return '<ul><li>' + items.join('</li><li>') + '</li></ul>';
         });
-        out = out.replace(/(^|\n)(?:\d+\.\s.+)(?:\n\d+\.\s.+)*/g, (m) => {
-          const items = m.trim().split(/\n/).map(line => line.replace(/^\d+\.\s+/, ''));
+        out = out.replace(/(^|\n)\s*(?:\d+\.\s.+)(?:\n\s*\d+\.\s.+)*/g, (m) => {
+          const items = m.trim().split(/\n/).map(line => line.replace(/^\s*\d+\.\s+/, ''));
           return '<ol><li>' + items.join('</li><li>') + '</li></ol>';
         });
         out = out.replace(/\n/g, '<br>');
@@ -378,9 +379,10 @@ add_shortcode('am_chat', function(){
         if (micVizInterval){ clearInterval(micVizInterval); micVizInterval=null; }
         if (avatarImg) avatarImg.style.transform='scale(1)';
         if (micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
+        if (mediaRecorder && mediaRecorder.stream){ mediaRecorder.stream.getTracks().forEach(t=> t.stop()); }
+        mediaRecorder = null;
         if (micCtx){ try{ micCtx.close(); } catch(_){} micCtx=null; micAnalyser=null; }
         if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
-        if (mediaRecorder && mediaRecorder.stream){ mediaRecorder.stream.getTracks().forEach(t=> t.enabled = true); }
         micMuted = false;
         if (muteBtn){
           muteBtn.classList.remove('muted');
