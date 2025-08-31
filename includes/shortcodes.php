@@ -100,7 +100,10 @@ add_shortcode('am_chat', function(){
 
     <div id="am-voice-call-<?php echo esc_attr($uid); ?>" class="am-voice-call-overlay" style="display:none;">
       <?php if($avatar): ?>
-        <img class="assistant-avatar" src="<?php echo esc_url($avatar); ?>" alt="<?php echo esc_attr($name); ?>">
+        <div class="am-voice-avatar-wrap">
+          <img class="assistant-avatar" src="<?php echo esc_url($avatar); ?>" alt="<?php echo esc_attr($name); ?>">
+          <div class="am-voice-level"></div>
+        </div>
       <?php endif; ?>
       <div class="am-voice-call-controls">
         <button type="button" class="am-voice-call-mute" aria-label="Mute Microphone">
@@ -155,6 +158,7 @@ add_shortcode('am_chat', function(){
       let micVizInterval = null;
       let micMuted = false;
       const avatarImg = overlay.querySelector('.assistant-avatar');
+      const levelCircle = overlay.querySelector('.am-voice-level');
 
       async function initMicMonitor(){
         try {
@@ -182,12 +186,12 @@ add_shortcode('am_chat', function(){
         return Math.sqrt(sum/micData.length);
       }
       function startMicViz(){
-        if (!micAnalyser || !avatarImg) return;
+        if (!micAnalyser || !levelCircle) return;
         if (micVizInterval) clearInterval(micVizInterval);
         micVizInterval = setInterval(()=>{
           const lvl = micLevel();
           const scale = 1 + Math.min(0.3, lvl*2);
-          avatarImg.style.transform = `scale(${scale.toFixed(2)})`;
+          levelCircle.style.transform = `scale(${scale.toFixed(2)})`;
         },100);
       }
 
@@ -410,8 +414,26 @@ add_shortcode('am_chat', function(){
         z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:32px;
         color:#fff; text-align:center;
       }
+      .am-voice-call-overlay .am-voice-avatar-wrap {
+        position:relative;
+        width:160px;
+        height:160px;
+      }
       .am-voice-call-overlay .assistant-avatar {
-        width:160px; height:160px; border-radius:50%; transition:transform .2s;
+        width:100%;
+        height:100%;
+        border-radius:50%;
+        position:relative;
+        z-index:2;
+      }
+      .am-voice-call-overlay .am-voice-level {
+        position:absolute;
+        inset:0;
+        border-radius:50%;
+        background:rgba(255,255,255,.1);
+        transform:scale(1);
+        transition:transform .2s;
+        z-index:1;
       }
       .am-voice-call-btn { padding:12px 24px; font-size:18px; border-radius:8px; color:#fff; border:none; cursor:pointer; }
       .am-voice-call-controls { display:flex; gap:16px; }
