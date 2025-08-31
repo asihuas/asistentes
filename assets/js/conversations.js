@@ -85,6 +85,22 @@
     }
     restorePins();
 
+    function bindAgentMenus() {
+      cont.querySelectorAll('.am-agent-menu-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const menu = btn.nextElementSibling;
+          if (menu) {
+            cont.querySelectorAll('.am-chat-menu.open, .am-agent-menu.open').forEach(m => {
+              if (m !== menu) m.classList.remove('open');
+            });
+            menu.classList.toggle('open');
+          }
+        });
+      });
+    }
+    bindAgentMenus();
+
     // --- Search filter ---
     const searchInput = cont.querySelector('.am-search-input');
     if (searchInput) {
@@ -94,9 +110,19 @@
           const name = li.querySelector('.am-agent-name')?.textContent.toLowerCase() || '';
           li.style.display = name.includes(q) ? '' : 'none';
         });
-        cont.querySelectorAll('.am-chat-item').forEach(li => {
-          const name = li.querySelector('.am-chat-name')?.textContent.toLowerCase() || '';
-          li.style.display = name.includes(q) ? '' : 'none';
+        cont.querySelectorAll('h5').forEach(h => {
+          const list = h.nextElementSibling;
+          if (list && list.classList.contains('am-chat-list')) {
+            let any = false;
+            list.querySelectorAll('.am-chat-item').forEach(li => {
+              const name = li.querySelector('.am-chat-name')?.textContent.toLowerCase() || '';
+              const match = name.includes(q);
+              li.style.display = match ? '' : 'none';
+              if (match) any = true;
+            });
+            h.style.display = any ? '' : 'none';
+            list.style.display = any ? '' : 'none';
+          }
         });
       });
     }
@@ -136,20 +162,6 @@
       if (menuBtn) {
         e.stopPropagation();
         const menu = menuBtn.nextElementSibling;
-        if (menu) {
-          cont.querySelectorAll('.am-chat-menu.open, .am-agent-menu.open').forEach(m => {
-            if (m !== menu) m.classList.remove('open');
-          });
-          menu.classList.toggle('open');
-        }
-        return;
-      }
-
-      // Agent menu toggle
-      const agentMenuBtn = e.target.closest('.am-agent-menu-btn');
-      if (agentMenuBtn) {
-        e.stopPropagation();
-        const menu = agentMenuBtn.nextElementSibling;
         if (menu) {
           cont.querySelectorAll('.am-chat-menu.open, .am-agent-menu.open').forEach(m => {
             if (m !== menu) m.classList.remove('open');
