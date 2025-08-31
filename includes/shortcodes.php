@@ -47,6 +47,13 @@ add_shortcode('am_chat', function(){
   );
 
   $uid = wp_generate_uuid4();
+  $user_name = '';
+  $user_email = '';
+  if (is_user_logged_in()) {
+    $cu = wp_get_current_user();
+    $user_name = $cu->display_name ?: $cu->user_login;
+    $user_email = $cu->user_email;
+  }
   ob_start(); ?>
   <div id="amc-<?php echo esc_attr($uid); ?>" class="openai-chat-container"
        data-agent-id="<?php echo esc_attr($agent_id); ?>"
@@ -61,7 +68,9 @@ add_shortcode('am_chat', function(){
        data-subtitle="<?php echo esc_attr($subtitle); ?>"
        data-complement="<?php echo esc_attr($complement); ?>"
        data-feedback-fab="<?php echo $enable_fab ? '1' : '0'; ?>"
-       data-avatar-url="<?php echo esc_url($avatar); ?>">
+       data-avatar-url="<?php echo esc_url($avatar); ?>"
+       data-user-name="<?php echo esc_attr($user_name); ?>"
+       data-user-email="<?php echo esc_attr($user_email); ?>">
 
     <div class="assistant-header">
       <?php if($avatar): ?><img class="assistant-avatar" src="<?php echo esc_url($avatar); ?>" alt="<?php echo esc_attr($name); ?>"><?php endif; ?>
@@ -70,6 +79,7 @@ add_shortcode('am_chat', function(){
         <p class="assistant-description"><?php echo esc_html($subtitle); ?></p>
         <?php if($complement): ?><p class="assistant-complement"><?php echo esc_html($complement); ?></p><?php endif; ?>
       </div>
+      <div class="am-voice-meter"></div>
     </div>
     <div id="openai-messages" class="openai-messages"></div>
     <form id="openai-chat-form" class="openai-chat-form" autocomplete="off" onsubmit="return false;">
@@ -464,16 +474,24 @@ function am_render_conversations_shortcode(){
   ob_start(); ?>
 <div class="am-assistant-chats-container">
 
+    <!-- Search -->
+    <input type="text" class="am-search-input" placeholder="Search..." style="margin-bottom:15px; width:100%;" />
+
     <!-- Agents visited -->
     <ul class="am-agent-list" style="margin-bottom: 30px;">
       <?php foreach ($agents as $agent): ?>
-        <li class="am-agent-item">
-          <a href="<?php echo esc_url(add_query_arg('agent_id', $agent['agent_id'], am_find_chat_page_url())); ?>">
+        <li class="am-agent-item" data-agent-id="<?php echo esc_attr($agent['agent_id']); ?>" data-agent-name="<?php echo esc_attr($agent['agent_name']); ?>" data-avatar-url="<?php echo esc_url($agent['avatar_url']); ?>" data-chat-url="<?php echo esc_url(add_query_arg('agent_id', $agent['agent_id'], am_find_chat_page_url())); ?>">
             <?php if (!empty($agent['avatar_url'])): ?>
               <img class="am-agent-avatar" src="<?php echo esc_url($agent['avatar_url']); ?>" alt="<?php echo esc_attr($agent['agent_name']); ?>" />
             <?php endif; ?>
             <span class="am-agent-name"><?php echo esc_html($agent['agent_name']); ?></span>
-          </a>
+            <div class="am-agent-menu-container">
+              <button type="button" class="am-agent-menu-btn" aria-label="Open menu">⋮</button>
+              <div class="am-agent-menu">
+                <button type="button" class="am-new-chat-btn" aria-label="New chat">New Chat</button>
+                <button type="button" class="am-ping-btn" aria-label="Ping">Ping</button>
+              </div>
+            </div>
         </li>
       <?php endforeach; ?>
     </ul>
@@ -511,15 +529,16 @@ function am_render_conversations_shortcode(){
   <style>
     .am-agent-list, .am-chat-list { list-style: none; padding: 0; margin: 0; }
     .am-agent-item, .am-chat-item { display: flex; align-items: center; margin-bottom: 10px; }
-    .am-agent-item a { display: flex; align-items: center; text-decoration: none; color: inherit; width: 100%; }
     .am-agent-avatar, .am-chat-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 10px; }
     .am-agent-name, .am-chat-name { font-weight: bold; margin-right: auto; }
-    .am-chat-menu-container { position: relative; }
-    .am-chat-menu-btn { background: none; border: none; cursor: pointer; font-size: 16px; }
-    .am-chat-menu { display: none; position: absolute; top: 100%; right: 0; background: #fff; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); z-index: 10; }
-    .am-chat-menu.open { display: block; }
-    .am-chat-menu button { display: block; width: 100%; padding: 5px 10px; text-align: left; background: none; border: none; cursor: pointer; }
-    .am-chat-menu button:hover { background: #f0f0f0; }
+    .am-chat-menu-container, .am-agent-menu-container { position: relative; }
+    .am-chat-menu-btn, .am-agent-menu-btn { background: none; border: none; cursor: pointer; font-size: 16px; }
+    .am-chat-menu, .am-agent-menu { display: none; position: absolute; top: 100%; right: 0; background: #fff; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; }
+    .am-chat-menu.open, .am-agent-menu.open { display: block; }
+    .am-chat-menu button, .am-agent-menu button { display: block; width: 100%; padding: 5px 10px; text-align: left; background: none; border: none; cursor: pointer; }
+    .am-chat-menu button:hover, .am-agent-menu button:hover { background: #f0f0f0; }
+    .assistant-header { position: relative; }
+    .am-voice-meter { position: absolute; bottom: 0; left: 0; height: 4px; width: 0; background: linear-gradient(90deg,#6a5acd,#00bcd4); transition: width .1s linear; }
   </style>
   <?php
   return ob_get_clean();

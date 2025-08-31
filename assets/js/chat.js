@@ -162,6 +162,10 @@
       let chunks = [];
       let isRecording = false;
       let micStream = null;
+      let audioCtx = null;
+      let analyser = null;
+      let meterAnim = null;
+      const meterEl = root.querySelector('.am-voice-meter');
 
       function updateVoiceBtn(state) {
         voiceBtn.classList.toggle('listening', state === 'listening');
@@ -183,6 +187,12 @@
             micStream.getTracks().forEach((t) => t.stop());
             micStream = null;
           }
+          if (audioCtx) {
+            audioCtx.close();
+            audioCtx = null;
+          }
+          if (meterEl) meterEl.style.width = '0%';
+          if (meterAnim) cancelAnimationFrame(meterAnim);
           if (sttOverlay) {
             sttOverlay.innerHTML = transcribingImg
               ? `<img src="${transcribingImg}" alt="Transcribing...">`
@@ -232,6 +242,29 @@
           if (callBtn) callBtn.style.display = 'none';
           mediaRecorder = null;
         };
+        // Setup audio meter
+        if (meterEl) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioCtx.createAnalyser();
+          const source = audioCtx.createMediaStreamSource(micStream);
+          source.connect(analyser);
+          analyser.fftSize = 256;
+          const data = new Uint8Array(analyser.fftSize);
+          const loop = () => {
+            analyser.getByteTimeDomainData(data);
+            let sum = 0;
+            for (let i = 0; i < data.length; i++) {
+              const v = (data[i] - 128) / 128;
+              sum += v * v;
+            }
+            const rms = Math.sqrt(sum / data.length);
+            const width = Math.min(100, Math.max(0, rms * 200));
+            meterEl.style.width = width + '%';
+            if (isRecording) meterAnim = requestAnimationFrame(loop);
+          };
+          meterAnim = requestAnimationFrame(loop);
+        }
+
         mediaRecorder.start();
         isRecording = true;
         updateVoiceBtn('listening');
