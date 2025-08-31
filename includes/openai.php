@@ -27,6 +27,14 @@ function am_build_agent_system_message($agent_id,$summary=''){
   $prompt = get_post_meta($agent_id,'am_system_prompt',true);
   $name   = get_the_title($agent_id);
   $style  = $prompt ?: ('You are '.$name.', a helpful character with a consistent voice. Be concise, empathetic, and useful.');
+  if(is_user_logged_in()){
+    $u = wp_get_current_user();
+    $uname = $u->display_name ?: $u->user_login;
+    $style .= "\nThe logged in user is {$uname}.";
+    if(!empty($u->user_email)){
+      $style .= " Their email is {$u->user_email}.";
+    }
+  }
   if($summary){ $style .= "\n\nPrevious context (summary):\n".$summary; }
   return ['role'=>'system','content'=>$style];
 }

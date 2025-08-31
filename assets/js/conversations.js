@@ -47,6 +47,60 @@
     if (!cont || cont.__amBound) return;
     cont.__amBound = true;
 
+    // --- Pinned agents helpers ---
+    function getPins() {
+      try { return JSON.parse(localStorage.getItem('amPinnedAgents') || '[]'); }
+      catch (_) { return []; }
+    }
+    function savePins(arr) { localStorage.setItem('amPinnedAgents', JSON.stringify(arr)); }
+    function restorePins() {
+      const list = cont.querySelector('.am-agent-list');
+      if (!list) return;
+      const pins = getPins();
+      pins.forEach(p => {
+        if (list.querySelector(`.am-agent-item[data-agent-id="${p.id}"]`)) return;
+        const li = document.createElement('li');
+        li.className = 'am-agent-item pinned';
+        li.dataset.agentId = p.id;
+        li.dataset.agentName = p.name;
+        li.dataset.avatarUrl = p.avatar || '';
+        li.dataset.chatUrl = p.chatUrl || '';
+        if (p.avatar) {
+          const img = document.createElement('img');
+          img.className = 'am-agent-avatar';
+          img.src = p.avatar;
+          img.alt = p.name;
+          li.appendChild(img);
+        }
+        const span = document.createElement('span');
+        span.className = 'am-agent-name';
+        span.textContent = p.name;
+        li.appendChild(span);
+        const menuCont = document.createElement('div');
+        menuCont.className = 'am-agent-menu-container';
+        menuCont.innerHTML = '<button type="button" class="am-agent-menu-btn" aria-label="Open menu">⋮</button><div class="am-agent-menu"><button type="button" class="am-new-chat-btn" aria-label="New chat">New Chat</button><button type="button" class="am-ping-btn" aria-label="Ping">Ping</button></div>';
+        li.appendChild(menuCont);
+        list.insertBefore(li, list.firstChild);
+      });
+    }
+    restorePins();
+
+    // --- Search filter ---
+    const searchInput = cont.querySelector('.am-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase();
+        cont.querySelectorAll('.am-agent-item').forEach(li => {
+          const name = li.querySelector('.am-agent-name')?.textContent.toLowerCase() || '';
+          li.style.display = name.includes(q) ? '' : 'none';
+        });
+        cont.querySelectorAll('.am-chat-item').forEach(li => {
+          const name = li.querySelector('.am-chat-name')?.textContent.toLowerCase() || '';
+          li.style.display = name.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
     // Listen for conversation updates
     window.addEventListener('am:conversation-updated', (e) => {
       const { cid, title, agentId, avatarUrl } = e.detail;
@@ -77,14 +131,13 @@
     });
 
     cont.addEventListener('click', async (e)=>{
-      // Menu toggle
+      // Conversation menu toggle
       const menuBtn = e.target.closest('.am-chat-menu-btn');
       if (menuBtn) {
         e.stopPropagation();
         const menu = menuBtn.nextElementSibling;
         if (menu) {
-          // Close other open menus first
-          cont.querySelectorAll('.am-chat-menu.open').forEach(m => {
+          cont.querySelectorAll('.am-chat-menu.open, .am-agent-menu.open').forEach(m => {
             if (m !== menu) m.classList.remove('open');
           });
           menu.classList.toggle('open');
@@ -92,9 +145,62 @@
         return;
       }
 
-      // Close menu when clicking outside
-      if (!e.target.closest('.am-chat-menu')) {
-        cont.querySelectorAll('.am-chat-menu.open').forEach(m => m.classList.remove('open'));
+      // Agent menu toggle
+      const agentMenuBtn = e.target.closest('.am-agent-menu-btn');
+      if (agentMenuBtn) {
+        e.stopPropagation();
+        const menu = agentMenuBtn.nextElementSibling;
+        if (menu) {
+          cont.querySelectorAll('.am-chat-menu.open, .am-agent-menu.open').forEach(m => {
+            if (m !== menu) m.classList.remove('open');
+          });
+          menu.classList.toggle('open');
+        }
+        return;
+      }
+
+      // Close menus when clicking outside
+      if (!e.target.closest('.am-chat-menu') && !e.target.closest('.am-agent-menu')) {
+        cont.querySelectorAll('.am-chat-menu.open, .am-agent-menu.open').forEach(m => m.classList.remove('open'));
+      }
+
+      // New Chat from agent menu
+      const newChatBtn = e.target.closest('.am-new-chat-btn');
+      if (newChatBtn) {
+        e.stopPropagation();
+        const item = newChatBtn.closest('.am-agent-item');
+        const url = item?.dataset?.chatUrl;
+        newChatBtn.closest('.am-agent-menu')?.classList.remove('open');
+        if (url) window.location.href = url;
+        return;
+      }
+
+      // Ping toggle
+      const pingBtn = e.target.closest('.am-ping-btn');
+      if (pingBtn) {
+        e.stopPropagation();
+        const item = pingBtn.closest('.am-agent-item');
+        const id = item?.dataset?.agentId;
+        if (!id) return;
+        const pins = getPins();
+        const exists = pins.find(p => String(p.id) === String(id));
+        if (exists) {
+          const updated = pins.filter(p => String(p.id) !== String(id));
+          savePins(updated);
+          item.classList.remove('pinned');
+        } else {
+          const data = {
+            id,
+            name: item.dataset.agentName || '',
+            avatar: item.dataset.avatarUrl || '',
+            chatUrl: item.dataset.chatUrl || ''
+          };
+          pins.push(data);
+          savePins(pins);
+          item.classList.add('pinned');
+        }
+        pingBtn.closest('.am-agent-menu')?.classList.remove('open');
+        return;
       }
 
       // Rename chat
